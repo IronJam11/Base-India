@@ -1,236 +1,143 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
+import { ethers } from "ethers";
 
-interface Claim {
-  id: number;
-  organization: string;
-  longitudes: string[];
-  latitudes: string[];
-  time_started: number;
-  time_ended: number;
-  demanded_tokens: string;
-  ipfs_hashes: string[];
-  status: 'Active' | 'Approved' | 'Rejected';
-  voting_end_time: number;
-  yes_votes: string;
-  no_votes: string;
-}
+const contractAddress = "0x579Af937f3ce12B4E76bAea112EFa09D4f345f75"; // Replace with your contract address
 
-const ActiveClaims: React.FC = () => {
-  const [claims, setClaims] = useState<Claim[]>([]);
+const abi = [
+  {
+    type: "function",
+    name: "getClaimDetailsPublic",
+    inputs: [{ name: "_claimId", type: "uint256" }],
+    outputs: [
+      {
+        components: [
+          { name: "id", type: "uint256" },
+          { name: "organisationAddress", type: "address" },
+          { name: "demandedCarbonCredits", type: "uint256" },
+          { name: "voting_end_time", type: "uint256" },
+          { name: "status", type: "uint256" },
+          { name: "description", type: "string" },
+          { name: "latitudes", type: "uint256" },
+          { name: "longitudes", type: "uint256" },
+          { name: "proofIpfsHashCode", type: "string[]" },
+          { name: "yes_votes", type: "uint256" },
+          { name: "no_votes", type: "uint256" },
+          { name: "total_votes", type: "uint256" },
+        ],
+        name: "",
+        type: "tuple",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "vote",
+    inputs: [
+      { name: "_claimId", type: "uint256" },
+      { name: "_vote", type: "bool" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "handleVotingResult",
+    inputs: [{ name: "_claimId", type: "uint256" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+];
+
+const MAX_CLAIMS = 50; // max ID to attempt
+
+const AllClaims = () => {
+  const [claims, setClaims] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showPopup, setShowPopup] = useState(false);
-  const [voteMessage, setVoteMessage] = useState('');
 
   useEffect(() => {
-    // Fetch claims from the backend API
-    const fetchClaims = async () => {
+    const loadClaims = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/claims');
-        if (!response.ok) {
-          throw new Error('Failed to fetch claims');
-        }
-        const data = await response.json();
+        if (!window.ethereum) throw new Error("MetaMask not found");
 
-        // Check if the response is successful and contains claims
-        if (data.success && data.claims) {
-          setClaims(data.claims);
-        } else {
-          throw new Error('Invalid response format');
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const contract = new ethers.Contract(contractAddress, abi, signer);
+
+        const allClaims: any[] = [];
+
+        for (let i = 1; i <= MAX_CLAIMS; i++) {
+          try {
+            const data = await contract.getClaimDetailsPublic(i);
+
+            // Optional: skip empty IDs if contract returns default for invalid ones
+            if (data.id === BigInt(0)) break;
+
+            allClaims.push({
+              id: Number(data.id),
+              org: data.organisationAddress,
+              credits: Number(data.demandedCarbonCredits),
+              votingEnd: Number(data.voting_end_time),
+              status: Number(data.status),
+              description: data.description,
+              lat: Number(data.latitudes),
+              lng: Number(data.longitudes),
+              proofs: data.proofIpfsHashCode,
+              yes: Number(data.yes_votes),
+              no: Number(data.no_votes),
+              total: Number(data.total_votes),
+            });
+          } catch (innerErr) {
+            break; // stop fetching on first failure (invalid ID)
+          }
         }
-      } catch (err) {
-        // Explicitly type the error as an instance of Error
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError('An unknown error occurred');
-        }
+
+        setClaims(allClaims);
+      } catch (err: any) {
+        setError(err.message || "Something went wrong");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchClaims();
+    loadClaims();
   }, []);
 
-  const handleVote = (voteType: 'yes' | 'no') => {
-    setVoteMessage(`You voted ${voteType === 'yes' ? 'Yes' : 'No'}. Thanks for voting!`);
-    setShowPopup(true);
-    // Here you can also add logic to send the vote to the backend
-  };
-
-  if (loading) {
-    return <div className="p-6 max-w-6xl mx-auto">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="p-6 max-w-6xl mx-auto text-red-600">{error}</div>;
-  }
+  if (loading) return <div className="p-4 text-lg">Loading claims...</div>;
+  if (error) return <div className="p-4 text-red-600">Error: {error}</div>;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Active Claims</h1>
-
-      {claims.map((claim) => {
-        // Convert backend data to frontend format
-        const frontendClaim = {
-          id: claim.id.toString(),
-          type: 'Claim', // Default type
-          status: claim.status === 'Active' ? 'Voting in Progress' : 'Completed',
-          orgWallet: claim.organization,
-          location: `${claim.latitudes[0]}° N, ${claim.longitudes[0]}° W`, // Example location
-          demandedTokens: parseInt(claim.demanded_tokens, 10),
-          created: new Date(claim.time_started * 1000).toLocaleDateString(),
-          completed: claim.status !== 'Active' ? new Date(claim.time_ended * 1000).toLocaleDateString() : undefined,
-          organization: claim.organization,
-          category: 'General', // Default category
-          proofImages: claim.ipfs_hashes.map((hash) => `https://ipfs.io/ipfs/${hash}`), // Convert IPFS hashes to URLs
-          votingEndsIn: claim.status === 'Active' ? new Date(claim.voting_end_time * 1000).toLocaleTimeString() : undefined,
-          finalResult: claim.status === 'Approved' ? 'Approved' : claim.status === 'Rejected' ? 'Rejected' : undefined,
-          votingResults:
-            claim.status !== 'Active'
-              ? {
-                  yes: parseInt(claim.yes_votes, 10),
-                  no: parseInt(claim.no_votes, 10),
-                }
-              : undefined,
-        };
-
-        return (
-          <div key={claim.id} className="bg-white rounded-lg shadow-md mb-6 p-6">
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex flex-col">
-                <h2 className="text-xl font-bold">{frontendClaim.type} #{frontendClaim.id}</h2>
-                <div className="flex items-center mt-1">
-                  <span className={`text-sm ${frontendClaim.status === 'Voting in Progress' ? 'text-orange-600' : 'text-green-600'}`}>
-                    {frontendClaim.status}
-                  </span>
-                  <span className="ml-2 text-gray-500">Status:</span>
-                </div>
-              </div>
-
-              {frontendClaim.status === 'Voting in Progress' && (
-                <div className="bg-red-100 px-4 py-2 rounded-md">
-                  <p className="text-sm">Ends in</p>
-                  <p className="font-bold text-red-600">{frontendClaim.votingEndsIn}</p>
-                </div>
-              )}
-
-              {frontendClaim.finalResult && (
-                <div className="text-right">
-                  <p className="text-sm text-gray-500">Final Result</p>
-                  <p className={`font-bold ${frontendClaim.finalResult === 'Approved' ? 'text-green-600' : 'text-red-600'}`}>
-                    {frontendClaim.finalResult}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <div className="flex items-center mb-2">
-                  <span className="mr-2">📁</span>
-                  <span className="mr-2 font-medium">Org Wallet:</span>
-                  <span>{frontendClaim.orgWallet}</span>
-                </div>
-                <div className="flex items-center mb-2">
-                  <span className="mr-2">📍</span>
-                  <span className="mr-2 font-medium">Location:</span>
-                  <span>{frontendClaim.location}</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="mr-2">💰</span>
-                  <span className="mr-2 font-medium">Demanded Tokens:</span>
-                  <span>{frontendClaim.demandedTokens} USDT</span>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center mb-2">
-                  <span className="mr-2">📅</span>
-                  <span className="mr-2 font-medium">
-                    {frontendClaim.status === 'Voting in Progress' ? 'Created:' : 'Completed:'}
-                  </span>
-                  <span>{frontendClaim.status === 'Voting in Progress' ? frontendClaim.created : frontendClaim.completed}</span>
-                </div>
-                <div className="flex items-center mb-2">
-                  <span className="mr-2">🏢</span>
-                  <span className="mr-2 font-medium">Organization:</span>
-                  <span>{frontendClaim.organization}</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="mr-2">🏷️</span>
-                  <span className="mr-2 font-medium">Category:</span>
-                  <span>{frontendClaim.category}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <h3 className="text-lg font-medium mb-2">Proof Images</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {frontendClaim.proofImages.map((img, index) => (
-                  <div key={index} className="aspect-video bg-gray-100 rounded-md overflow-hidden">
-                    <img src={img} alt={`Proof ${index + 1}`} className="w-full h-full object-cover" />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {frontendClaim.status === 'Voting in Progress' && (
-              <div>
-                <h3 className="text-lg font-medium mb-2">Cast Your Vote</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <button 
-                    className="bg-green-500 hover:bg-green-600 text-white py-3 rounded-md flex justify-center items-center"
-                    onClick={() => handleVote('yes')}
-                  >
-                    <span className="mr-2">✓</span> Vote Yes
-                  </button>
-                  <button 
-                    className="bg-red-500 hover:bg-red-600 text-white py-3 rounded-md flex justify-center items-center"
-                    onClick={() => handleVote('no')}
-                  >
-                    <span className="mr-2">✕</span> Vote No
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {frontendClaim.votingResults && (
-              <div>
-                <h3 className="text-lg font-medium mb-2">Final Voting Results</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-green-50 p-4 rounded-md text-center">
-                    <p className="text-2xl font-bold text-green-600">{frontendClaim.votingResults.yes}%</p>
-                    <p>Yes Votes</p>
-                  </div>
-                  <div className="bg-red-50 p-4 rounded-md text-center">
-                    <p className="text-2xl font-bold text-red-600">{frontendClaim.votingResults.no}%</p>
-                    <p>No Votes</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })}
-
-      {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <p className="text-lg font-medium mb-4">{voteMessage}</p>
-            <button 
-              className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md"
-              onClick={() => setShowPopup(false)}
-            >
-              Close
-            </button>
-          </div>
+    <div className="p-4 max-w-5xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">All Claims</h1>
+      {claims.map((claim) => (
+        <div key={claim.id} className="mb-6 p-4 border rounded shadow bg-white">
+          <h2 className="text-xl font-semibold mb-2">Claim #{claim.id}</h2>
+          <p className="text-gray-700 mb-1">
+            <strong>Description:</strong> {claim.description}
+          </p>
+          <p className="text-gray-700 mb-1">
+            <strong>Organization:</strong> {claim.org}
+          </p>
+          <p className="text-gray-700 mb-1">
+            <strong>Carbon Credits:</strong> {claim.credits}
+          </p>
+          <p className="text-gray-700 mb-1">
+            <strong>Votes:</strong> ✅ {claim.yes} / ❌ {claim.no} (Total: {claim.total})
+          </p>
+          <p className="text-gray-700 mb-1">
+            <strong>Status:</strong> {['Active', 'Approved', 'Rejected'][claim.status]}
+          </p>
+          <p className="text-gray-700 mb-1">
+            <strong>Voting Ends:</strong> {new Date(claim.votingEnd * 1000).toLocaleString()}
+          </p>
+          <p className="text-gray-700">
+            <strong>Location:</strong> ({claim.lat}, {claim.lng})
+          </p>
         </div>
-      )}
+      ))}
     </div>
   );
 };
 
-export default ActiveClaims;
+export default AllClaims;
