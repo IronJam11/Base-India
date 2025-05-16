@@ -1,11 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import "forge-std/Test.sol";
+import {Test, console} from "forge-std/Test.sol";
 import "../src/CarbonToken.sol";
 import "../src/CarbonCredits.sol";
 import "../src/utils/structs.sol";
 
+contract DummyVerifier {
+    function verifyProof(
+        uint[2] calldata,
+        uint[2][2] calldata, 
+        uint[2] calldata,
+        uint[] calldata
+    ) external pure returns (bool) {
+        return true; // Always verify successfully
+    }
+}
 contract CarbonMarketplaceTest is Test {
     CarbonCredit public carbonToken;
     CarbonCreditMarketplace public marketplace;
@@ -14,13 +24,14 @@ contract CarbonMarketplaceTest is Test {
     address public org2 = address(0x2);
     address public org3 = address(0x3);
     address public owner = address(this);
+    address dummyVerifier = address(new DummyVerifier());
 
     uint256 public constant INITIAL_SUPPLY = 1_000_000 ether; // Using ether as 10^18 multiplier
     uint256 public constant DEMANDED_CREDITS = 1000 ether;
 
     function setUp() public {
         carbonToken = new CarbonCredit(INITIAL_SUPPLY);
-        marketplace = new CarbonCreditMarketplace(address(carbonToken));
+        marketplace = new CarbonCreditMarketplace(address(carbonToken), address(dummyVerifier));
 
         // Set up organizations
         vm.prank(org1);

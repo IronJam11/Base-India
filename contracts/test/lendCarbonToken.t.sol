@@ -6,7 +6,16 @@ import "../src/CarbonToken.sol";
 import "../src/CarbonCredits.sol";
 
 import "../src/utils/structs.sol";
-
+contract DummyVerifier {
+    function verifyProof(
+        uint[2] calldata,
+        uint[2][2] calldata, 
+        uint[2] calldata,
+        uint[] calldata
+    ) external pure returns (bool) {
+        return true; // Always verify successfully
+    }
+}
 contract CarbonMarketplaceTest is Test {
     CarbonCredit public carbonToken;
     CarbonCreditMarketplace public marketplace;
@@ -14,6 +23,7 @@ contract CarbonMarketplaceTest is Test {
     address public org1 = address(0x1);
     address public org2 = address(0x2);
     address public org3 = address(0x3);
+    address dummyVerifier = address(new DummyVerifier());
 
     uint256 public constant DEMANDED_CREDITS = 1000 ether;
     uint256 public constant LEND_AMOUNT = 500 ether;
@@ -21,7 +31,7 @@ contract CarbonMarketplaceTest is Test {
     function setUp() public {
         // Deploy contracts
         carbonToken = new CarbonCredit(0); // Start with 0 supply since we'll mint through claims
-        marketplace = new CarbonCreditMarketplace(address(carbonToken));
+        marketplace = new CarbonCreditMarketplace(address(carbonToken), address(dummyVerifier));
 
         // Set up organizations
         vm.startPrank(org1);
@@ -72,7 +82,10 @@ contract CarbonMarketplaceTest is Test {
             org1,
             LEND_AMOUNT,
             5, // 5% interest
-            "proofData"
+            [uint256(2),uint256(2)],
+            [[uint256(2), uint256(2)], [uint256(2), uint256(2)]],
+            [uint256(1),uint256(1)],
+            new uint256[](1)
         );
 
         // Step 3: Org2 approves the lend request

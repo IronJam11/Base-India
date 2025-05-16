@@ -3,17 +3,28 @@ pragma solidity ^0.8.18;
 
 // Import OpenZeppelin ERC20 contract
 import "node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "node_modules/@openzeppelin/contracts/access/Ownable.sol";
+import "node_modules/@openzeppelin/contracts/access/Ownable.sol"; 
 import "./utils/structs.sol";
 import "./utils/enum.sol";
 
 import "./CarbonToken.sol";
 
+interface IVerifier {
+    function verifyProof(
+        uint[2] calldata a,
+        uint[2][2] calldata b,
+        uint[2] calldata c,
+        uint[] calldata input
+    ) external view returns (bool);
+}
+
 contract CarbonCreditMarketplace {
+    IVerifier public verifier;
     uint256 organisationCounter = 0;
     uint256 claimCounter = 0;
     uint256 lentRequestCounter = 0;
     address public carbonTokenAddress;
+    address public verifierProofAddress;
     mapping (address => Organisation) public addressToOrganisation;
     mapping (address => Claim[]) public addressToClaims;
     mapping (address => LendRequest[]) public addressToLendRequests;
@@ -25,9 +36,11 @@ contract CarbonCreditMarketplace {
     mapping (uint256 => Organisation) public organisationIDToOrganisation;
     CarbonCredit public carbonToken;
 
-    constructor(address _carbonTokenAddress) {
+    constructor(address _carbonTokenAddress, address _verifierProofAddress) {
         carbonTokenAddress = _carbonTokenAddress;
+        verifierProofAddress = _verifierProofAddress;
         carbonToken = CarbonCredit(_carbonTokenAddress);
+        verifier = IVerifier(_verifierProofAddress);
     }
     function createOrganisation(
         string memory _name,
@@ -140,21 +153,34 @@ contract CarbonCreditMarketplace {
         address _lenderAddress,
         uint256 _carbonCredits,
         uint256 _interestRate,
-        string memory _proofData
+        uint[2] calldata a,
+        uint[2][2] calldata b,
+        uint[2] calldata c,
+        uint[] calldata input
     ) public {
+        // 1. Verify proof first
+        require(verifier.verifyProof(a, b, c, input), "Invalid proof");
+        
+        // 2. Extract eligibility score from public inputs
+        // (Assuming it's the first public input)
+        uint256 eligibilityScore = input[0];
+        
+        // 3. Create the request
         LendRequest storage newRequest = addressToLendRequests[msg.sender].push();
         newRequest.id = lentRequestCounter;
         newRequest.borrowerAddress = msg.sender;
         newRequest.lenderAddress = _lenderAddress;
         newRequest.carbonCredits = _carbonCredits;
-        newRequest.response = 0; // 0 = pending, 1 = accepted, 2 = rejected
+        newRequest.response = 0;
         newRequest.interestRate = _interestRate;
         newRequest.timeOfissue = block.timestamp;
-        newRequest.eligibilityScore = 0;
-        newRequest.proofData = _proofData;
+        newRequest.eligibilityScore = eligibilityScore; // Set from ZKP!
+        newRequest.proofData = ""; // Or store proof components if needed
+        
         lendrequestIdToLendRequest[lentRequestCounter] = newRequest;
         lentRequestCounter++;
     }
+
     function respondToLendRequest(
         uint256 _requestId,
         uint256 _response
@@ -172,11 +198,8 @@ contract CarbonCreditMarketplace {
             Organisation storage lender = addressToOrganisation[request.lenderAddress];
             lender.totalCarbonCreditsLent += request.carbonCredits;
             lender.timesLent++;
-            // carbonToken.approve(address(this),request.carbonCredits);
             carbonToken.mint(request.borrowerAddress,request.carbonCredits);
             carbonToken.burn(request.lenderAddress,request.carbonCredits);
-
-
         }
     }
 
