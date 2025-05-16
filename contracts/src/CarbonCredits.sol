@@ -281,7 +281,4 @@ contract CarbonCreditMarketplace {
     function getUserClaims() public view returns (Claim[] memory) {
         return addressToClaims[msg.sender];
     }
-
-    
-
 }
