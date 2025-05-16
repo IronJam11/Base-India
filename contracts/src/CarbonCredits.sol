@@ -3,20 +3,11 @@ pragma solidity ^0.8.18;
 
 // Import OpenZeppelin ERC20 contract
 import "node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "node_modules/@openzeppelin/contracts/access/Ownable.sol"; 
+import "node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import "./utils/structs.sol";
-import "./utils/enum.sol";
+import "./utils/enum.sol";                                                                   
 
 import "./CarbonToken.sol";
-
-interface IVerifier {
-    function verifyProof(
-        uint[2] calldata a,
-        uint[2][2] calldata b,
-        uint[2] calldata c,
-        uint[] calldata input
-    ) external view returns (bool);
-}
 
 contract CarbonCreditMarketplace {
     IVerifier public verifier;
