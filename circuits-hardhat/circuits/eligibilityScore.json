@@ -1,0 +1,12 @@
+{
+    "EXPECTED_MINIMUM_CREDIT_SCORE": 70,
+    "EXPECTED_MAXIMUM_OFFSET": 10000,
+    "borrowerTimesRepaid": 8,
+    "borrowerOffset": 5000,
+    "borrowerCreditScore": 78,
+    "borrowerTimesLent": 3,
+    "borrowerTotalReturned": 12000,
+    "borrowerRequestAmount": 5000,
+    "lenderBalance": 10000,
+    "lenderTimesLent": 7
+}  
