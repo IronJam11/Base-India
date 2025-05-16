@@ -50,6 +50,9 @@ struct ClaimPublicView {
     uint256 latitudes;
     uint256 longitudes;
     string[] proofIpfsHashCode;
+    uint256 yes_votes;
+    uint256 no_votes;
+    uint256 total_votes;
 }
 
 struct OrganisationPublicView {

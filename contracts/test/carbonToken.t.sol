@@ -69,7 +69,7 @@ contract CarbonMarketplaceTest is Test {
         );
 
         vm.prank(org1);
-        Claim memory claim = marketplace.getClaimDetails(0);
+        ClaimPublicView memory claim = marketplace.getClaimDetailsPublic(0);
         assertEq(claim.demandedCarbonCredits, DEMANDED_CREDITS);
         assertEq(claim.status, 0); // Pending
     }
@@ -95,7 +95,7 @@ contract CarbonMarketplaceTest is Test {
         marketplace.vote(0, false);
 
         vm.prank(org1);
-        Claim memory claim = marketplace.getClaimDetails(0);
+        ClaimPublicView memory claim = marketplace.getClaimDetailsPublic(0);
         assertEq(claim.yes_votes, 1);
         assertEq(claim.no_votes, 1);
         assertEq(claim.total_votes, 2);
@@ -121,7 +121,7 @@ contract CarbonMarketplaceTest is Test {
         marketplace.handleVotingResult(0);
         assertEq(carbonToken.balanceOf(org1), DEMANDED_CREDITS);
         vm.prank(org1);
-        Claim memory claim = marketplace.getClaimDetails(0);
+        ClaimPublicView memory claim = marketplace.getClaimDetailsPublic(0);
         assertEq(claim.status, 1); // Approved
     }
 
@@ -148,7 +148,7 @@ contract CarbonMarketplaceTest is Test {
         marketplace.handleVotingResult(0);
         assertEq(carbonToken.balanceOf(org1), 0);
         vm.prank(org1);
-        Claim memory claim = marketplace.getClaimDetails(0);
+        ClaimPublicView memory claim = marketplace.getClaimDetailsPublic(0);
         assertEq(uint256(claim.status), 2); // Rejected
     }
 }

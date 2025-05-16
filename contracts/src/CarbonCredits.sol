@@ -204,6 +204,20 @@ contract CarbonCreditMarketplace {
     ) public view returns (ClaimPublicView memory) {
         Claim storage claim = claimIdToClaim[_claimId];
         require(claim.id == _claimId, "Claim not found");
+        uint256 yes_votes = claim.yes_votes;
+        uint256 no_votes = claim.no_votes;
+        uint256 total_votes = claim.total_votes;
+        if (block.timestamp > claim.voting_end_time) {
+            yes_votes = 0;
+            no_votes = 0;    
+            total_votes = 0;
+        }
+        else {
+            yes_votes = claim.yes_votes;
+            no_votes = claim.no_votes;
+            total_votes = claim.total_votes;
+        }
+            
         return ClaimPublicView({
             id: claim.id,
             organisationAddress: claim.organisationAddress,
@@ -213,7 +227,10 @@ contract CarbonCreditMarketplace {
             description: claim.description,
             latitudes: claim.latitudes,
             longitudes: claim.longitudes,
-            proofIpfsHashCode: claim.proofIpfsHashCode
+            proofIpfsHashCode: claim.proofIpfsHashCode,
+            yes_votes: yes_votes,
+            no_votes: no_votes,
+            total_votes: total_votes
         });
     }
     function getLendRequestDetails(
