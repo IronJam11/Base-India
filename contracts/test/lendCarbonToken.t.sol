@@ -85,8 +85,9 @@ contract CarbonMarketplaceTest is Test {
             [uint256(2),uint256(2)],
             [[uint256(2), uint256(2)], [uint256(2), uint256(2)]],
             [uint256(1),uint256(1)],
-            new uint256[](1)
+            new uint256[](2)
         );
+
 
         // Step 3: Org2 approves the lend request
         vm.prank(org1);

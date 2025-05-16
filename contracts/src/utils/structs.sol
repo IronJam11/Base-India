@@ -21,7 +21,7 @@ struct LendRequest {
     uint256 interestRate;
     uint256 timeOfissue;
     uint256 eligibilityScore;
-    string proofData;
+    bytes proofData;
     uint256 status;
 }
 

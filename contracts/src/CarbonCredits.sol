@@ -164,6 +164,8 @@ contract CarbonCreditMarketplace {
         // 2. Extract eligibility score from public inputs
         // (Assuming it's the first public input)
         uint256 eligibilityScore = input[0];
+        uint256 reccomendation = input[1];
+        bytes memory proofData = abi.encode(a, b, c, input);
         
         // 3. Create the request
         LendRequest storage newRequest = addressToLendRequests[msg.sender].push();
@@ -175,7 +177,7 @@ contract CarbonCreditMarketplace {
         newRequest.interestRate = _interestRate;
         newRequest.timeOfissue = block.timestamp;
         newRequest.eligibilityScore = eligibilityScore; // Set from ZKP!
-        newRequest.proofData = ""; // Or store proof components if needed
+        newRequest.proofData = proofData; // Or store proof components if needed
         
         lendrequestIdToLendRequest[lentRequestCounter] = newRequest;
         lentRequestCounter++;
