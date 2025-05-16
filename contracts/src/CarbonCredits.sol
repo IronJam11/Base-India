@@ -181,13 +181,14 @@ contract CarbonCreditMarketplace {
     }
 
     function paybackLendRequest(
-        uint256 _requestId,
+        uint256 _requestId
     ) public {
         LendRequest storage request = lendrequestIdToLendRequest[_requestId];
+        uint256 amount = request.carbonCredits;
         require(request.id == _requestId, "Request not found");
         require(msg.sender == request.borrowerAddress, "Only borrower can payback");
         require(request.response == 1, "Request not accepted");
-        require(_amount <= request.carbonCredits, "Amount exceeds borrowed credits");
+        require(amount <= request.carbonCredits, "Amount exceeds borrowed credits");
         uint256 interest = (request.carbonCredits * request.interestRate) / 100 * (block.timestamp - request.timeOfissue) / 365 days;
         carbonToken.burn(msg.sender,interest);
         carbonToken.mint(request.lenderAddress,interest);
