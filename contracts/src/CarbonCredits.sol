@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-// Import OpenZeppelin ERC20 contract
-import "node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "node_modules/@openzeppelin/contracts/access/Ownable.sol";
-import "./utils/structs.sol";
-import "./utils/enum.sol";
 
-import "./CarbonToken.sol";
+
+// Fix import paths to use proper format for Foundry projects
+// Import OpenZeppelin contracts
+import "./utils/structs.sol";
+import "./utils/enum.sol";                                                                   
+
+import "./CarbonToken.sol"; 
 
 contract CarbonCreditMarketplace {
     uint256 organisationCounter = 0;

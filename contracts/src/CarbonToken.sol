@@ -1,10 +1,10 @@
-// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
 // Import OpenZeppelin ERC20 contract
-import "node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
+// Fix the import path - use a relative path or proper package import
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract CarbonCredit is ERC20{
+contract CarbonCredit is ERC20 {
     constructor(uint256 initialSupply) ERC20("Carbon Credit", "CC") {
         _mint(msg.sender, initialSupply * 10 ** decimals());
     }
@@ -13,7 +13,7 @@ contract CarbonCredit is ERC20{
         _mint(to, amount);
     }
 
-    function burn(address from,uint256 amount) external {
+    function burn(address from, uint256 amount) external {
         _burn(from, amount);
     }
 }
