@@ -169,6 +169,8 @@ contract CarbonCreditMarketplace {
         newRequest.timeOfissue = block.timestamp;
         newRequest.eligibilityScore = eligibilityScore; // Set from ZKP!
         newRequest.proofData = proofData; // Or store proof components if needed
+        newRequest.status = 0;
+        newRequest.recommendation = reccomendation;
         
         lendrequestIdToLendRequest[lentRequestCounter] = newRequest;
         lentRequestCounter++;
@@ -249,6 +251,40 @@ contract CarbonCreditMarketplace {
             total_votes: total_votes
         });
     }
+    function getClaimsByStatus(uint256 _status) public view returns (ClaimPublicView[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < claimCounter; i++) {
+            if (claimIdToClaim[i].status == _status) {
+                count++;
+            }
+        }
+        ClaimPublicView[] memory filteredClaims = new ClaimPublicView[](count);
+        uint256 index = 0;
+        for (uint256 i = 0; i < claimCounter; i++) {
+            Claim memory claim = claimIdToClaim[i];
+            if (claim.status == _status) {
+                bool showVotes = (block.timestamp > claim.voting_end_time) && (claim.status != 0);
+                
+                filteredClaims[index] = ClaimPublicView({
+                    id: claim.id,
+                    organisationAddress: claim.organisationAddress,
+                    demandedCarbonCredits: claim.demandedCarbonCredits,
+                    voting_end_time: claim.voting_end_time,
+                    status: claim.status,
+                    description: claim.description,
+                    latitudes: claim.latitudes,
+                    longitudes: claim.longitudes,
+                    proofIpfsHashCode: claim.proofIpfsHashCode,
+                    yes_votes: showVotes ? claim.yes_votes : 0,
+                    no_votes: showVotes ? claim.no_votes : 0,
+                    total_votes: showVotes ? claim.total_votes : 0
+                });
+                index++;
+            }
+        }
+        return filteredClaims;
+    }
+
     function getLendRequestDetails(
         address _borrowerAddress,
         uint256 _requestId
