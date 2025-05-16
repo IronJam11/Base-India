@@ -23,6 +23,8 @@ struct LendRequest {
     uint256 eligibilityScore;
     bytes proofData;
     uint256 status;
+    uint256 recommendation;
+    
 }
 
 struct Claim {
