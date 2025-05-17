@@ -30,6 +30,7 @@ import "./CarbonToken.sol";
         mapping (uint256 => address[]) public claimIdToVotersYes;
         mapping (uint256 => address[]) public claimIdToVotersNo;
         mapping (uint256 => LendRequest) public lendrequestIdToLendRequest;
+        mapping (address => LendRequest[]) public addressToLendRequestsLenderPOV;
         mapping (uint256 => Claim) public claimIdToClaim;
         mapping (uint256 => Organisation) public organisationIDToOrganisation;
         CarbonCredit public carbonToken;
@@ -167,6 +168,7 @@ import "./CarbonToken.sol";
             
             // 3. Create the request
             LendRequest storage newRequest = addressToLendRequests[msg.sender].push();
+            addressToLendRequestsLenderPOV[_lenderAddress].push(newRequest);
             newRequest.id = lentRequestCounter;
             newRequest.borrowerAddress = msg.sender;
             newRequest.lenderAddress = _lenderAddress;
@@ -337,11 +339,14 @@ import "./CarbonToken.sol";
         }
     }
 
-        function getUserLendRequests() public view returns (LendRequest[] memory) {
-            return addressToLendRequests[msg.sender];
+    function getUserLendRequests() public view returns (LendRequest[] memory) {
+        return addressToLendRequests[msg.sender];
 
-        }
-        function getUserClaims() public view returns (Claim[] memory) {
-            return addressToClaims[msg.sender];
-        }
+    }
+    function getUserClaims() public view returns (Claim[] memory) {
+        return addressToClaims[msg.sender];
+    }
+    function getUserLendRequestsLenderPOV() public view returns (LendRequest[] memory) {
+        return addressToLendRequestsLenderPOV[msg.sender];
+    }
     }
