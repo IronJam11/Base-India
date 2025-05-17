@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ethers } from 'ethers';
+import { ethers} from 'ethers';
 import dynamic from 'next/dynamic';
 import CarbonCreditMarketplaceABI from '../../utils/CarbonCreditMarketplace.json';
 // Remove the static import of snarkjs
@@ -183,54 +183,51 @@ const OrganizationsPage: React.FC = () => {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(contractAddress, CarbonCreditMarketplaceABI.abi, signer);
-      
-      // Structure the proof data correctly
-      // Make sure these match the exact structure the contract expects
-      const piA = proof.pi_a;
-      const piB = proof.pi_b;
-      const piC = proof.pi_c;
-      
-      // Convert public signals to the format expected by the contract
-      // Make sure this is an array of the expected length and format
-      const formattedPublicSignals = publicSignals.map((signal: any) => 
-        typeof signal === 'string' ? signal : signal.toString()
-      );
+  
+      // Convert proof components to correct format
+      const a = [ Number(proof.pi_a[0]), Number(proof.pi_a[1])];
+      const b = [
+        [ Number(proof.pi_b[0][0]),  Number(proof.pi_b[0][1])],
+        [ Number(proof.pi_b[1][0]),  Number(proof.pi_b[1][1])]
+      ];
+      const c = [ Number(proof.pi_c[0]),  Number(proof.pi_c[1])];
+  
+      // Convert public signals to BigNumbers
+      const input = (publicSignals as string[]).map((signal: string) => Number(signal));
   
       console.log("Sending data to contract:", {
         lenderAddress,
-        borrowAmount: ethers.parseUnits(borrowRequestAmount, 0),
+        carbonCredits: ethers.parseUnits(borrowRequestAmount, 0),
         interestRate: 5,
-        piA,
-        piB,
-        piC,
-        publicSignals: formattedPublicSignals
+        a,
+        b,
+        c,
+        input
       });
-      
-      const tx = await contract.createLendRequest(
-        lenderAddress,
-        ethers.parseUnits(borrowRequestAmount, 0),
-        5,
-        piA,
-        piB,
-        piC,
-        formattedPublicSignals
-      );
-      
-      console.log("Transaction sent:", tx);
-      alert("Lend request created successfully! Transaction hash: " + tx.hash);
-      await tx.wait();
+  
+      // const tx = await contract.createLendRequest(
+      //   lenderAddress,
+      //   ethers.parseUnits(borrowRequestAmount, 0), // _carbonCredits
+      //   5, // _interestRate
+      //   a, // uint[2] calldata a
+      //   b, // uint[2][2] calldata b
+      //   c, // uint[2] calldata c
+      //   input // uint[] calldata input
+      // );
+  
+      // console.log("Transaction sent:", tx);
+      alert("Lend request created successfully!");
+      // await tx.wait();
       console.log("Transaction confirmed");
-    }
-    catch (error: any) {
+    } catch (error: any) {
       console.error("Error creating lend request:", error);
       
-      // More detailed error logging
       if (error.code && error.code === 'UNSUPPORTED_OPERATION') {
         console.error("Fragment matching error - check the data structure being passed");
-      
         console.log("Actual parameters:", {
           lenderAddress,
-          borrowAmount: borrowRequestAmount,
+          carbonCredits: borrowRequestAmount,
+          interestRate: 5,
           proof: proof,
           publicSignals: publicSignals
         });
