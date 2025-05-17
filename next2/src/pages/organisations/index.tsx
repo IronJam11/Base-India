@@ -8,7 +8,7 @@ interface Organization {
   totalCarbonCredits: string;
 }
 
-const contractAddress = '0x579Af937f3ce12B4E76bAea112EFa09D4f345f75';
+const contractAddress = '0xA7d1A93570F37FfdD3ad8F6299AB96eCF86d5902';
 
 const abi = [
   {

@@ -1,34 +1,89 @@
 import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 
-const contractAddress = "0x579Af937f3ce12B4E76bAea112EFa09D4f345f75";
+const contractAddress = "0xA7d1A93570F37FfdD3ad8F6299AB96eCF86d5902";
 
 const abi = [
   {
-    type: "function",
-    name: "getClaimDetailsPublic",
-    inputs: [{ name: "_claimId", type: "uint256" }],
-    outputs: [
+    "type": "function",
+    "name": "getClaimDetailsPublic",
+    "inputs": [
       {
-        components: [
-          { name: "id", type: "uint256" },
-          { name: "organisationAddress", type: "address" },
-          { name: "demandedCarbonCredits", type: "uint256" },
-          { name: "voting_end_time", type: "uint256" },
-          { name: "status", type: "uint256" },
-          { name: "description", type: "string" },
-          { name: "latitudes", type: "uint256" },
-          { name: "longitudes", type: "uint256" },
-          { name: "proofIpfsHashCode", type: "string[]" },
-          { name: "yes_votes", type: "uint256" },
-          { name: "no_votes", type: "uint256" },
-          { name: "total_votes", type: "uint256" },
-        ],
-        name: "",
-        type: "tuple",
-      },
+        "name": "_claimId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
     ],
-    stateMutability: "view",
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct ClaimPublicView",
+        "components": [
+          {
+            "name": "id",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "organisationAddress",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "demandedCarbonCredits",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "voting_end_time",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "status",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "description",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "latitudes",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "longitudes",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "proofIpfsHashCode",
+            "type": "string[]",
+            "internalType": "string[]"
+          },
+          {
+            "name": "yes_votes",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "no_votes",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "total_votes",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     type: "function",
