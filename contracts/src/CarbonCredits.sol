@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
+// Import OpenZeppelin ERC20 contract
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./utils/structs.sol";
-import "./utils/enum.sol";                                                                   
-
+import "./utils/enum.sol";
 import "./CarbonToken.sol";
 
     interface IVerifier {

@@ -1,6 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 
+// Define types for type safety
+interface Claim {
+  id: number;
+  org: string;
+  credits: number;
+  votingEnd: number;
+  status: number;
+  description: string;
+  lat: number;
+  lng: number;
+  proofs: string[];
+  yes: number;
+  no: number;
+  total: number;
+}
+
+interface VotedClaims {
+  [claimId: number]: boolean;
+}
+
 const contractAddress = "0xA7d1A93570F37FfdD3ad8F6299AB96eCF86d5902";
 
 const abi = [
@@ -100,11 +120,21 @@ const abi = [
 const MAX_CLAIMS = 50;
 
 const AllClaims = () => {
-  const [claims, setClaims] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [account, setAccount] = useState<string | null>(null);
-  const [votedClaims, setVotedClaims] = useState<{ [claimId: number]: boolean }>({});
+  const [votedClaims, setVotedClaims] = useState<VotedClaims>({});
+  const [currentTime, setCurrentTime] = useState<number>(Math.floor(Date.now() / 1000));
+
+  useEffect(() => {
+    // Update current time every second to check voting end status
+    const timer = setInterval(() => {
+      setCurrentTime(Math.floor(Date.now() / 1000));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const loadClaims = async () => {
@@ -117,7 +147,7 @@ const AllClaims = () => {
         setAccount(address);
 
         const contract = new ethers.Contract(contractAddress, abi, signer);
-        const allClaims: any[] = [];
+        const allClaims: Claim[] = [];
 
         for (let i = 1; i <= MAX_CLAIMS; i++) {
           try {
@@ -203,7 +233,8 @@ const AllClaims = () => {
             "Rejected": "bg-red-100 text-red-800 border-red-200"
           };
           const yesPercentage = claim.total > 0 ? (claim.yes / claim.total) * 100 : 0;
-          
+          const isVotingEnded = currentTime > claim.votingEnd;
+
           return (
             <div 
               key={claim.id} 
@@ -247,7 +278,10 @@ const AllClaims = () => {
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                       </svg>
                     </span>
-                    <span className="text-sm"><strong>Voting Ends:</strong> {new Date(claim.votingEnd * 1000).toLocaleString()}</span>
+                    <span className="text-sm">
+                      <strong>Voting {isVotingEnded ? "Ended" : "Ends"}:</strong>{" "}
+                      {new Date(claim.votingEnd * 1000).toLocaleString()}
+                    </span>
                   </div>
                   
                   <div className="flex items-center">
@@ -260,32 +294,36 @@ const AllClaims = () => {
                   </div>
                 </div>
                 
-                <div className="mt-4">
-                  <div className="flex justify-between mb-1 text-sm">
-                    <div className="flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-                      </svg>
-                      {claim.yes}
+                {/* Vote counts and progress bar - only show when voting has ended */}
+                {isVotingEnded && (
+                  <div className="mt-4">
+                    <div className="flex justify-between mb-1 text-sm">
+                      <div className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                        </svg>
+                        {claim.yes}
+                      </div>
+                      <div className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M18 9.5a1.5 1.5 0 11-3 0v-6a1.5 1.5 0 013 0v6zM14 9.667v-5.43a2 2 0 00-1.105-1.79l-.05-.025A4 4 0 0011.055 2H5.64a2 2 0 00-1.962 1.608l-1.2 6A2 2 0 004.44 12H8v4a2 2 0 002 2 1 1 0 001-1v-.667a4 4 0 01.8-2.4l1.4-1.866a4 4 0 00.8-2.4z" />
+                        </svg>
+                        {claim.no}
+                      </div>
+                      <span className="text-gray-500">Total: {claim.total}</span>
                     </div>
-                    <div className="flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M18 9.5a1.5 1.5 0 11-3 0v-6a1.5 1.5 0 013 0v6zM14 9.667v-5.43a2 2 0 00-1.105-1.79l-.05-.025A4 4 0 0011.055 2H5.64a2 2 0 00-1.962 1.608l-1.2 6A2 2 0 004.44 12H8v4a2 2 0 002 2 1 1 0 001-1v-.667a4 4 0 01.8-2.4l1.4-1.866a4 4 0 00.8-2.4z" />
-                      </svg>
-                      {claim.no}
+                    
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-green-500 h-2 rounded-full" 
+                        style={{ width: `${yesPercentage}%` }}
+                      ></div>
                     </div>
-                    <span className="text-gray-500">Total: {claim.total}</span>
                   </div>
-                  
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-green-500 h-2 rounded-full" 
-                      style={{ width: `${yesPercentage}%` }}
-                    ></div>
-                  </div>
-                </div>
+                )}
                 
-                {!isOrg ? (
+                {/* Show voting buttons only if voting has not ended and user is not the claim creator */}
+                {!isVotingEnded && !isOrg ? (
                   <div className="mt-5 flex gap-3">
                     <button
                       onClick={() => handleVote(claim.id, true)}
@@ -320,12 +358,19 @@ const AllClaims = () => {
                       </span>
                     </button>
                   </div>
-                ) : (
+                ) : isOrg ? (
                   <div className="mt-4 text-sm text-blue-600 bg-blue-50 p-2 rounded flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     You created this claim. Voting disabled.
+                  </div>
+                ) : (
+                  <div className="mt-4 text-sm text-amber-600 bg-amber-50 p-2 rounded flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Voting period has ended. Results are displayed above.
                   </div>
                 )}
               </div>
@@ -335,5 +380,6 @@ const AllClaims = () => {
       </div>
     </div>
   );
-}
+};
+
 export default AllClaims;
