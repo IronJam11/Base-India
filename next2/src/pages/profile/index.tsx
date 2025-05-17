@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserProvider, Contract, JsonRpcSigner } from 'ethers';
-import { Edit, Users, Upload } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 const CONTRACT_ADDRESS = "0x579Af937f3ce12B4E76bAea112EFa09D4f345f75";
 const CONTRACT_ABI = [
@@ -41,6 +41,20 @@ const CONTRACT_ABI = [
     ],
     "stateMutability": "view",
     "type": "function"
+  },
+  // Added new function ABI
+  {
+    "type": "function",
+    "name": "recordOrganisationEmissions",
+    "inputs": [
+      {
+        "name": "_emissions",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   }
 ];
 
@@ -64,7 +78,10 @@ export default function Dashboard() {
     profilePhoto: ''
   });
 
-  // Connect to wallet
+  // New state for emissions
+  const [emissions, setEmissions] = useState('');
+  const [isEmissionsLoading, setIsEmissionsLoading] = useState(false);
+
   useEffect(() => {
     const connectWallet = async () => {
       if (window.ethereum) {
@@ -153,33 +170,86 @@ export default function Dashboard() {
     }
   };
 
+  // New handler for emissions submission
+  const handleEmissionsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signer) return alert("Wallet not connected");
+
+    if (!emissions || isNaN(Number(emissions)) || Number(emissions) <= 0) {
+      return alert("Please enter a valid emissions number");
+    }
+
+    setIsEmissionsLoading(true);
+    try {
+      const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+      const tx = await contract.recordOrganisationEmissions(Number(emissions));
+      await tx.wait();
+
+      alert("Emissions recorded successfully!");
+      setEmissions('');
+      // Optionally you could refetch the organization data to update emissions info
+    } catch (err) {
+      console.error("Failed to record emissions:", err);
+      alert("Failed to record emissions.");
+    } finally {
+      setIsEmissionsLoading(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       {isRegistered ? (
-        <div className="bg-white p-6 shadow rounded">
-          <h2 className="text-xl font-bold mb-4">Organization Profile</h2>
-          <div className="flex items-center space-x-4 mb-4">
-            {organization.profilePhoto ? (
-              <img
-                src={`https://ipfs.io/ipfs/${organization.profilePhoto}`}
-                alt="Profile"
-                className="w-16 h-16 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center">
-                <Users className="w-6 h-6 text-white" />
+        <>
+          <div className="bg-white p-6 shadow rounded mb-6">
+            <h2 className="text-xl font-bold mb-4">Organization Profile</h2>
+            <div className="flex items-center space-x-4 mb-4">
+              {organization.profilePhoto ? (
+                <img
+                  src={`https://ipfs.io/ipfs/${organization.profilePhoto}`}
+                  alt="Profile"
+                  className="w-16 h-16 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+              )}
+              <div>
+                <p className="font-medium">{organization.name}</p>
+                <p className="text-sm text-gray-500">
+                  {organization.walletAddress.slice(0, 6)}...{organization.walletAddress.slice(-4)}
+                </p>
               </div>
-            )}
-            <div>
-              <p className="font-medium">{organization.name}</p>
-              <p className="text-sm text-gray-500">
-                {organization.walletAddress.slice(0, 6)}...{organization.walletAddress.slice(-4)}
-              </p>
             </div>
+            <p className="mb-2"><strong>Description:</strong> {organization.description}</p>
+            <p><strong>Reputation Score:</strong> {organization.reputationScore}</p>
           </div>
-          <p className="mb-2"><strong>Description:</strong> {organization.description}</p>
-          <p><strong>Reputation Score:</strong> {organization.reputationScore}</p>
-        </div>
+
+          {/* New emissions form */}
+          <div className="bg-white p-6 shadow rounded">
+            <h2 className="text-xl font-bold mb-4">Record Emissions</h2>
+            <form onSubmit={handleEmissionsSubmit} className="space-y-4 max-w-sm">
+              <div>
+                <label className="block text-sm font-medium">Emissions (uint256)</label>
+                <input
+                  type="number"
+                  min={0}
+                  required
+                  value={emissions}
+                  onChange={(e) => setEmissions(e.target.value)}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isEmissionsLoading}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                {isEmissionsLoading ? "Recording..." : "Record Emissions"}
+              </button>
+            </form>
+          </div>
+        </>
       ) : (
         <div className="bg-white p-6 shadow rounded">
           <h2 className="text-xl font-bold mb-4">Register Your Organization</h2>
