@@ -349,4 +349,4 @@ import "./CarbonToken.sol";
     function getUserLendRequestsLenderPOV() public view returns (LendRequest[] memory) {
         return addressToLendRequestsLenderPOV[msg.sender];
     }
-    }
+}
