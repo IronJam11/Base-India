@@ -9,6 +9,15 @@ import "./utils/enum.sol";
 
 import "./CarbonToken.sol";
 
+interface IVerifier {
+    function verifyProof(
+        uint[2] calldata,
+        uint[2][2] calldata, 
+        uint[2] calldata,
+        uint[] calldata
+    ) external pure returns (bool);
+}
+
 contract CarbonCreditMarketplace {
     IVerifier public verifier;
     uint256 organisationCounter = 0;
@@ -225,7 +234,7 @@ contract CarbonCreditMarketplace {
         uint256 yes_votes = claim.yes_votes;
         uint256 no_votes = claim.no_votes;
         uint256 total_votes = claim.total_votes;
-        if (block.timestamp > claim.voting_end_time) {
+        if (block.timestamp < claim.voting_end_time) {
             yes_votes = 0;
             no_votes = 0;    
             total_votes = 0;
