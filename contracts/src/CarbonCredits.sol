@@ -2,8 +2,7 @@
 pragma solidity ^0.8.18;
 
 // Import OpenZeppelin ERC20 contract
-import "node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "node_modules/@openzeppelin/contracts/access/Ownable.sol";
+
 import "./utils/structs.sol";
 import "./utils/enum.sol";                                                                   
 

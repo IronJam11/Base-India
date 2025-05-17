@@ -106,6 +106,9 @@ contract CarbonMarketplaceTest is Test {
         marketplace.vote(0, false);
 
         vm.prank(org1);
+
+        vm.warp(block.timestamp + 2 hours);
+        
         ClaimPublicView memory claim = marketplace.getClaimDetailsPublic(0);
         assertEq(claim.yes_votes, 1);
         assertEq(claim.no_votes, 1);
