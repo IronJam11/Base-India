@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
+import CarbonCreditMarketplaceABI from '../../utils/CarbonCreditMarketplace.json';
 
 // Define types for type safety
 interface Claim {
@@ -21,7 +22,7 @@ interface VotedClaims {
   [claimId: number]: boolean;
 }
 
-const contractAddress = "0xA7d1A93570F37FfdD3ad8F6299AB96eCF86d5902";
+const contractAddress = "0x431Fb2E732D863934d49ae1e2799E802a9a18e2b";
 
 const abi = [
   {
@@ -146,7 +147,7 @@ const AllClaims = () => {
         const address = await signer.getAddress();
         setAccount(address);
 
-        const contract = new ethers.Contract(contractAddress, abi, signer);
+        const contract = new ethers.Contract(contractAddress, CarbonCreditMarketplaceABI.abi, signer);
         const allClaims: Claim[] = [];
 
         for (let i = 1; i <= MAX_CLAIMS; i++) {

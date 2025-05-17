@@ -1,7 +1,7 @@
 import { useState, useEffect, ChangeEvent, DragEvent, FormEvent } from 'react';
 import Head from 'next/head';
 import { ethers } from 'ethers';
-import CarbonCreditMarketplaceABI from './CarbonCreditMarketplace.json';
+import CarbonCreditMarketplaceABI from '../../utils/CarbonCreditMarketplace.json';
 
 declare global {
   interface Window {
@@ -33,7 +33,7 @@ function ClaimForm(): JSX.Element {
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const contractAddress = "0xA7d1A93570F37FfdD3ad8F6299AB96eCF86d5902";
+  const contractAddress = "0x431Fb2E732D863934d49ae1e2799E802a9a18e2b";
 
   useEffect(() => {
     const checkConnectedWallet = async () => {
