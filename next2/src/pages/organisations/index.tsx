@@ -1,10 +1,36 @@
 import React, { useEffect, useState } from 'react';
+import { ethers } from 'ethers';
 
 interface Organization {
-  address: string;
   name: string;
-  reputation_score: string;
+  description: string;
+  profilePhotoipfsHashCode: string;
+  totalCarbonCredits: string;
 }
+
+const contractAddress = '0x579Af937f3ce12B4E76bAea112EFa09D4f345f75';
+
+const abi = [
+  {
+    type: 'function',
+    name: 'getAllOrganisationDetails',
+    inputs: [],
+    outputs: [
+      {
+        name: '',
+        type: 'tuple[]',
+        internalType: 'struct OrganisationPublicView[]',
+        components: [
+          { name: 'name', type: 'string' },
+          { name: 'description', type: 'string' },
+          { name: 'profilePhotoipfsHashCode', type: 'string' },
+          { name: 'totalCarbonCredits', type: 'uint256' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+];
 
 const OrganizationsPage: React.FC = () => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -12,23 +38,28 @@ const OrganizationsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch organizations from the backend API
     const fetchOrganizations = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/organizations');
-        if (!response.ok) {
-          throw new Error('Failed to fetch organizations');
-        }
-        const data = await response.json();
+        // Request user's wallet
+        if (!window.ethereum) throw new Error("MetaMask is not installed.");
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-        // Check if the response is successful and contains organizations
-        if (data.success && data.organizations) {
-          setOrganizations(data.organizations);
-        } else {
-          throw new Error('Invalid response format');
-        }
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+
+        const contract = new ethers.Contract(contractAddress, abi, signer);
+        const orgs = await contract.getAllOrganisationDetails();
+
+        // Map data to local state format
+        const parsedOrgs: Organization[] = orgs.map((org: any) => ({
+          name: org.name,
+          description: org.description,
+          profilePhotoipfsHashCode: org.profilePhotoipfsHashCode,
+          totalCarbonCredits: ethers.formatUnits(org.totalCarbonCredits, 0), // or 18 if decimals
+        }));
+
+        setOrganizations(parsedOrgs);
       } catch (err) {
-        // Explicitly type the error as an instance of Error
         if (err instanceof Error) {
           setError(err.message);
         } else {
@@ -52,35 +83,37 @@ const OrganizationsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Main content */}
       <main className="p-6 max-w-6xl mx-auto">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Organizations</h2>
           <p className="text-gray-600">Browse and support eco-friendly organizations</p>
         </div>
 
-        {/* Organizations grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {organizations.map((org) => (
-            <div key={org.address} className="bg-white rounded-lg shadow p-6">
+          {organizations.map((org, index) => (
+            <div key={index} className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center mb-4">
                 <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden mr-4">
                   <img
-                    src={`https://via.placeholder.com/150?text=${org.name}`}
+                    src={
+                      org.profilePhotoipfsHashCode
+                        ? `https://ipfs.io/ipfs/${org.profilePhotoipfsHashCode}`
+                        : `https://via.placeholder.com/150?text=${org.name}`
+                    }
                     alt={org.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800">{org.name}</h3>
-                  <p className="text-gray-500 text-sm">{org.address}</p>
+                  <p className="text-gray-500 text-sm">{org.description}</p>
                 </div>
               </div>
 
               <div className="border-t border-gray-100 pt-4">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600 text-sm">Reputation Score</span>
-                  <span className="text-green-600 font-medium">{org.reputation_score}/5.0</span>
+                  <span className="text-gray-600 text-sm">Total Carbon Credits</span>
+                  <span className="text-green-600 font-medium">{org.totalCarbonCredits}</span>
                 </div>
                 <button className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded transition-colors">
                   Lend Money
@@ -91,7 +124,6 @@ const OrganizationsPage: React.FC = () => {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="py-6 text-center text-gray-500 text-sm">
         © 2025 EcoLend. All rights reserved.
       </footer>
