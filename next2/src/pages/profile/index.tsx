@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserProvider, Contract, JsonRpcSigner } from 'ethers';
 import { Users } from 'lucide-react';
 
-const CONTRACT_ADDRESS = "0x579Af937f3ce12B4E76bAea112EFa09D4f345f75";
+const CONTRACT_ADDRESS = "0xA7d1A93570F37FfdD3ad8F6299AB96eCF86d5902";
 const CONTRACT_ABI = [
   {
     "inputs": [
