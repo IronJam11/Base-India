@@ -14,7 +14,7 @@ const Navbar = () => {
                     <Link href="/Claim" className="text-gray-600 hover:text-green-600">Claims</Link>
                     <Link href="/organisations" className="text-gray-600 hover:text-green-600">Organizations</Link>
                     <Link href="/addClaim" className="text-gray-600 hover:text-green-600">Create Claim</Link>
-                    <Link href="/aiagents" className="text-gray-600 hover:text-green-600">AI Agents</Link>
+                    
                     <Link href="/request" className="text-gray-600 hover:text-green-600"> Request</Link>
                     <Link href="/profile" className="text-gray-600 hover:text-green-600">Profile</Link>
 
