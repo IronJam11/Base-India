@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
 // Import OpenZeppelin ERC20 contract
