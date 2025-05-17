@@ -64,6 +64,9 @@ struct OrganisationPublicView {
     string description;
     string profilePhotoipfsHashCode;
     uint256 totalCarbonCredits;
+    uint256 timesLent;
+    address walletAddress;
+
 }
 
 // mappings 

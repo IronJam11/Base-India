@@ -316,7 +316,9 @@ contract CarbonCreditMarketplace {
                 name: org.name,
                 description: org.description,
                 profilePhotoipfsHashCode: org.profilePhotoipfsHashCode,
-                totalCarbonCredits: carbonToken.balanceOf(org.walletAddress)
+                totalCarbonCredits: carbonToken.balanceOf(org.walletAddress),
+                timesLent: org.timesLent,
+                walletAddress: org.walletAddress
             });
             count++;
         }
