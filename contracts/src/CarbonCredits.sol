@@ -338,6 +338,7 @@ import "./CarbonToken.sol";
             });
             count++;
         }
+        return orgs;
     }
 
     function getUserLendRequests() public view returns (LendRequest[] memory) {
@@ -351,3 +352,8 @@ import "./CarbonToken.sol";
         return addressToLendRequestsLenderPOV[msg.sender];
     }
 }
+
+
+// Verifier deployed at: 0xA31a0b24369bb899D557Cb8cc0411b3336778f3f
+//   CarbonCredit token deployed at: 0x04f083E9925Ad711045Aa896f8022FED9C402a93
+//   Marketplace deployed at: 0xAb0992eaD847B28904c8014E770E0294Cd198866

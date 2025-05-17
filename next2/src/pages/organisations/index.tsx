@@ -9,6 +9,9 @@ interface Organization {
   description: string;
   profilePhotoipfsHashCode: string;
   totalCarbonCredits: string;
+  walletAddress?: string;
+  timesLent?: string;
+
 }
 interface MyOrganizationDetail {
   name: string;
@@ -24,7 +27,7 @@ interface MyOrganizationDetail {
   reputationScore: string;
 }
 
-const contractAddress = '0x431Fb2E732D863934d49ae1e2799E802a9a18e2b';
+const contractAddress = '0xAb0992eaD847B28904c8014E770E0294Cd198866';
 
 const abi = [
   {
@@ -82,11 +85,14 @@ const OrganizationsPage: React.FC = () => {
         const signer = await provider.getSigner();
         const contract = new ethers.Contract(contractAddress, CarbonCreditMarketplaceABI.abi, signer);
         const orgs = await contract.getAllOrganisationDetails();
+        console.log("Raw orgs:", orgs);
         const parsedOrgs: Organization[] = orgs.map((org: any) => ({
           name: org.name,
           description: org.description,
           profilePhotoipfsHashCode: org.profilePhotoipfsHashCode,
           totalCarbonCredits: ethers.formatUnits(org.totalCarbonCredits, 0), // or 18 if decimals
+          walletAddress: org.walletAddress,
+          timesLent: org.timesLent.toString(),
         }));
 
         const balance = await contract.getBalanceOfOrganisation();
@@ -108,8 +114,10 @@ const OrganizationsPage: React.FC = () => {
           emissions: ethers.formatUnits(myOrg.emissions, 0),
           reputationScore: ethers.formatUnits(myOrg.reputationScore, 0),
         }
+        
         setMyOrg(myOrgDetail);
         setOrganizations(parsedOrgs);
+        console.log("Organizations fetched:", parsedOrgs);
       } catch (err) {
         if (err instanceof Error) {
           setError(err.message);
@@ -125,17 +133,12 @@ const OrganizationsPage: React.FC = () => {
 
   async function calculateProof(lenderOrg: any) {
     try {
-      // Check if snarkjs is loaded
       if (!window.snarkjs || !window.snarkjs.groth16) {
         throw new Error("snarkjs is not loaded properly");
       }
-      
-      // Prepare the input data for the proof
       if (!myOrg || !myOrgCarbonCredits) {
         throw new Error("Organization data not loaded");
       }
-  
-      // Calculate the offset (emission - carbonTokenbalance * 50)
       const offset = Number(myOrg.emissions) - (Number(myOrgCarbonCredits) * 50);
   
       const input = {
@@ -287,7 +290,7 @@ const OrganizationsPage: React.FC = () => {
                   <img
                     src={
                       org.profilePhotoipfsHashCode
-                        ? `https://ipfs.io/ipfs/${org.profilePhotoipfsHashCode}`
+                        ? `https://imgs.search.brave.com/PixY8_zgl8cU1m2y47bf0V-2jOluOmEHOR4564ScsUA/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzAwLzY0LzY3LzI3/LzM2MF9GXzY0Njcy/NzM2X1U1a3BkR3M5/a2VVbGw4Q1JRM3Az/WWFFdjJNNnFrVlk1/LmpwZw`
                         : `https://via.placeholder.com/150?text=${org.name}`
                     }
                     alt={org.name}
@@ -303,7 +306,7 @@ const OrganizationsPage: React.FC = () => {
               <div className="border-t border-gray-100 pt-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600 text-sm">Total Carbon Credits</span>
-                  <span className="text-green-600 font-medium">{org.totalCarbonCredits}</span>
+                  <span className="text-green-600 font-medium">{(Number(org.totalCarbonCredits) /Math.pow(10,36))}</span>
                 </div>
                 <button 
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded transition-colors"
@@ -358,10 +361,19 @@ const OrganizationsPage: React.FC = () => {
       )}
 
       <footer className="py-6 text-center text-gray-500 text-sm">
-        © 2025 EcoLend. All rights reserved.
+        © 2025 ZK Carbon. All rights reserved.
       </footer>
     </div>
   );
 };
 
 export default OrganizationsPage;
+
+// Verifier contract:
+// 0x42C1657F1d0B214dBfb20E7F69eC05f35E4d57f6
+
+// CarbonCredit token:
+// 0x1d4A8249E8f1E4B0DAD7a0896B74135517CD1F0e
+
+// Marketplace:
+// 0xd20241Ab97C41363cD11384DBaC3760d7052b340

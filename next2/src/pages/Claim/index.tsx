@@ -22,7 +22,7 @@ interface VotedClaims {
   [claimId: number]: boolean;
 }
 
-const contractAddress = "0x431Fb2E732D863934d49ae1e2799E802a9a18e2b";
+const contractAddress = "0xAb0992eaD847B28904c8014E770E0294Cd198866";
 
 const abi = [
   {
@@ -141,39 +141,42 @@ const AllClaims = () => {
     const loadClaims = async () => {
       try {
         if (!window.ethereum) throw new Error("MetaMask not found");
-
+  
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
         const address = await signer.getAddress();
         setAccount(address);
-
-        const contract = new ethers.Contract(contractAddress, CarbonCreditMarketplaceABI.abi, signer);
-        const allClaims: Claim[] = [];
-
-        for (let i = 1; i <= MAX_CLAIMS; i++) {
-          try {
-            const data = await contract.getClaimDetailsPublic(i);
-            if (data.id === BigInt(0)) break;
-
-            allClaims.push({
-              id: Number(data.id),
-              org: data.organisationAddress.toLowerCase(),
-              credits: Number(data.demandedCarbonCredits),
-              votingEnd: Number(data.voting_end_time),
-              status: Number(data.status),
-              description: data.description,
-              lat: Number(data.latitudes),
-              lng: Number(data.longitudes),
-              proofs: data.proofIpfsHashCode,
-              yes: Number(data.yes_votes),
-              no: Number(data.no_votes),
-              total: Number(data.total_votes),
-            });
-          } catch (innerErr) {
-            break;
-          }
-        }
-
+  
+        const contract = new ethers.Contract(
+          contractAddress,
+          CarbonCreditMarketplaceABI.abi,
+          signer
+        );
+  
+        const fetchByStatus = async (status: number): Promise<Claim[]> => {
+          const claims = await contract.getClaimsByStatus(status);
+          return claims.map((data: any) => ({
+            id: Number(data.id),
+            org: data.organisationAddress.toLowerCase(),
+            credits: Number(data.demandedCarbonCredits),
+            votingEnd: Number(data.voting_end_time),
+            status: Number(data.status),
+            description: data.description,
+            lat: Number(data.latitudes),
+            lng: Number(data.longitudes),
+            proofs: data.proofIpfsHashCode,
+            yes: Number(data.yes_votes),
+            no: Number(data.no_votes),
+            total: Number(data.total_votes),
+          }));
+        };
+  
+        // Fetch claims in the desired order: 0 -> 1 -> 2
+        const claimsStatus0 = await fetchByStatus(0);
+        const claimsStatus1 = await fetchByStatus(1);
+        const claimsStatus2 = await fetchByStatus(2);
+  
+        const allClaims = [...claimsStatus0, ...claimsStatus1, ...claimsStatus2];
         setClaims(allClaims);
       } catch (err: any) {
         setError(err.message || "Something went wrong");
@@ -181,9 +184,10 @@ const AllClaims = () => {
         setLoading(false);
       }
     };
-
+  
     loadClaims();
   }, []);
+  
 
   const handleVote = async (claimId: number, voteValue: boolean) => {
     try {

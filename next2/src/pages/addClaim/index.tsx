@@ -33,7 +33,7 @@ function ClaimForm(): JSX.Element {
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const contractAddress = "0x431Fb2E732D863934d49ae1e2799E802a9a18e2b";
+  const contractAddress = "0xAb0992eaD847B28904c8014E770E0294Cd198866";
 
   useEffect(() => {
     const checkConnectedWallet = async () => {

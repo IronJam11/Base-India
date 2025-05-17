@@ -39,7 +39,7 @@ export default function CreditRequests() {
   const [txStatus, setTxStatus] = useState<Record<string, 'success' | 'error' | ''>>({});
 
   // Contract configuration
-  const contractAddress = '0x431Fb2E732D863934d49ae1e2799E802a9a18e2b';
+  const contractAddress = '0xAb0992eaD847B28904c8014E770E0294Cd198866';
   const contractABI = CarbonCreditMarketplaceABI.abi;
 
   // Connect to wallet
